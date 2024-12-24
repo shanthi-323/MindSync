@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    environment:
+      - OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+    ports:
+      - "8501:8501"
