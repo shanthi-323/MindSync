@@ -2,12 +2,10 @@ import streamlit as st
 import openai
 
 # Retrieve the OpenAI API key from Streamlit secrets
-try:
-    api_key = st.secrets["OPENAI_API_KEY"]
-    openai.api_key = api_key
-except KeyError:
-    st.error("OpenAI API Key is not found in Streamlit secrets.")
-    st.stop()
+api_key = st.secrets["OPENAI_API_KEY"]
+
+# Set the OpenAI API key
+openai.api_key = api_key
 
 # Page configuration
 st.set_page_config(
@@ -28,6 +26,7 @@ class StreamlitOpenAIChatbot:
         """
         Initialize or reset session state variables
         """
+        # Initialize conversation history if not exists
         if 'conversation' not in st.session_state:
             st.session_state.conversation = [
                 {"role": "system", "content": "You are a helpful AI assistant. Be concise and friendly."}
@@ -42,7 +41,9 @@ class StreamlitOpenAIChatbot:
         """
         try:
             # Add user message to conversation
-            st.session_state.conversation.append({"role": "user", "content": user_input})
+            st.session_state.conversation.append(
+                {"role": "user", "content": user_input}
+            )
             
             # Call OpenAI API
             response = openai.ChatCompletion.create(
@@ -54,7 +55,9 @@ class StreamlitOpenAIChatbot:
             ai_response = response.choices[0].message["content"]
             
             # Add AI response to conversation
-            st.session_state.conversation.append({"role": "assistant", "content": ai_response})
+            st.session_state.conversation.append(
+                {"role": "assistant", "content": ai_response}
+            )
             
             return ai_response
         
@@ -66,30 +69,42 @@ class StreamlitOpenAIChatbot:
         """
         Render the Streamlit chat interface
         """
+        # Title and description
         st.title("🤖 AI Chatbot")
         st.write("Chat with an intelligent AI assistant powered by OpenAI")
         
+        # Display chat messages from history
         for message in st.session_state.conversation[1:]:  # Skip system message
             if message['role'] != 'system':
                 with st.chat_message(message['role']):
                     st.write(message['content'])
         
+        # Chat input
         if prompt := st.chat_input("What would you like to chat about?"):
+            # Display user message
             with st.chat_message("user"):
                 st.write(prompt)
             
+            # Generate and display AI response
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
                     response = self.generate_response(prompt)
                     st.write(response)
         
+        # Additional sidebar controls
         with st.sidebar:
+            # Reset conversation button
             if st.button("🔄 Reset Conversation"):
                 st.session_state.conversation = [
                     {"role": "system", "content": "You are a helpful AI assistant. Be concise and friendly."}
                 ]
                 st.rerun()
-            st.selectbox("Select AI Model", ["gpt-3.5-turbo", "gpt-4"])
+            
+            # Model selection
+            st.selectbox(
+                "Select AI Model", 
+                ["gpt-3.5-turbo", "gpt-4"]
+            )
 
 def main():
     chatbot = StreamlitOpenAIChatbot()
