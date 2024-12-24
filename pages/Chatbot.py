@@ -1,11 +1,10 @@
 import streamlit as st
-import openai
+from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
-# Retrieve the OpenAI API key from Streamlit secrets
-api_key = st.secrets["OPENAI_API_KEY"]
-
-# Set the OpenAI API key
-openai.api_key = api_key
+# Load environment variables from .env file
+load_dotenv()
 
 # Page configuration
 st.set_page_config(
@@ -19,8 +18,40 @@ class StreamlitOpenAIChatbot:
         """
         Initialize the Streamlit OpenAI Chatbot
         """
+        # Initialize API key from environment
+        self._initialize_api_key()
+        
+        # Initialize OpenAI client
+        self._initialize_openai_client()
+        
         # Initialize session state for conversation history
         self._initialize_session_state()
+    
+    def _initialize_api_key(self):
+        """
+        Retrieve API key from environment variables
+        """
+        # Attempt to get API key from environment
+        api_key = os.getenv("OPENAI_API_KEY")
+        
+        # Check if API key exists
+        if not api_key:
+            st.error("OpenAI API Key not found in .env file")
+            st.info("Please add OPENAI_API_KEY to your .env file")
+            st.stop()
+        
+        # Store API key in session state
+        st.session_state.openai_api_key = api_key
+    
+    def _initialize_openai_client(self):
+        """
+        Initialize OpenAI client with API key
+        """
+        try:
+            self.client = OpenAI(api_key=st.session_state.openai_api_key)
+        except Exception as e:
+            st.error(f"Failed to initialize OpenAI client: {e}")
+            st.stop()
     
     def _initialize_session_state(self):
         """
@@ -46,13 +77,13 @@ class StreamlitOpenAIChatbot:
             )
             
             # Call OpenAI API
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=st.session_state.conversation
             )
             
             # Extract AI response
-            ai_response = response.choices[0].message["content"]
+            ai_response = response.choices[0].message.content
             
             # Add AI response to conversation
             st.session_state.conversation.append(
