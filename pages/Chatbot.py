@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Read API key from environment variable
+api_key = os.getenv("OPENAI_API_KEY")
+
 # Page configuration
 st.set_page_config(
     page_title="AI Chatbot",
